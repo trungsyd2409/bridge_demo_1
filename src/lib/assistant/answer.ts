@@ -19,7 +19,9 @@ Quy tắc bắt buộc:
 5. Không khẳng định kết luận pháp lý chắc chắn ("chắc chắn bạn thắng kiện"); nói "có thể", "thường" khi phù hợp.
 6. whatToDo: 2-4 bước cụ thể, làm được ngay. evidenceToKeep: 2-4 loại giấy tờ/bằng chứng nên lưu.
    whoCanHelp: chọn từ CONTACTS, ghi tên kèm số điện thoại.
-7. Nếu người dùng lo sợ về visa: nhắc rằng liên hệ Fair Work không làm visa bị huỷ (nếu EVIDENCE có nói điều này).`;
+7. Nếu người dùng lo sợ về visa: nhắc rằng liên hệ Fair Work không làm visa bị huỷ (nếu EVIDENCE có nói điều này).
+Khi các bằng chứng mâu thuẫn nhau về con số, luôn dùng bằng chứng có nhãn BẢNG TRA CỨU hoặc DỮ LIỆU TRỰC TIẾP. Nếu chỉ có TRÍCH TRANG mà chúng mâu thuẫn, nói rõ là thông tin chưa thống nhất và khuyên gọi Fair Work.
+`;
 
 const SCHEMA = {
   type: "OBJECT",
