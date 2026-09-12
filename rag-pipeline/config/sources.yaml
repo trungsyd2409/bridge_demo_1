@@ -136,7 +136,7 @@
 - id: student_visa_condition_8105
   url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500?fbclid=IwY2xjawURf-JwZG9mBWV4dG4DYWVtAjEwAGJyaWQRMWw1VFJ2YUE0VnRsbWVUbG9zcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeFAUieZJnhJqtq8OvwTMprONMcZxEgGBvlfzYUulA2uURDL-VB3aUXm5CoME_aem_t2iEfItWgRNfF9Y5XLxpQA
   source: Department of Home Affairs
-  type: html
+  type: pdf
   language: en
   topic: visa_threat
   industry: [all]
