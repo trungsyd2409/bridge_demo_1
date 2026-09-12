@@ -5,7 +5,7 @@
  *
  * Kết quả rỗng là tín hiệu quan trọng: không đủ bằng chứng -> LLM phải nói "không đủ thông tin".
  */
-import { FINAL_CHUNKS, RERANK_MIN_SCORE, RERANK_MODELS, TIMEOUT, isFakeMode } from "./config";
+import { FINAL_CHUNKS, RERANK_MIN_SCORE, RERANK_MODELS, TIMEOUT, isFakeMode, isRerankOff } from "./config";
 import { GeminiAuthError, generateJson } from "./gemini";
 import type { SearchHit } from "./types";
 
@@ -48,7 +48,7 @@ export function applyScores(candidates: SearchHit[], scores: { index: number; sc
 
 export async function rerank(englishQuery: string, candidates: SearchHit[]): Promise<RerankResult> {
   if (candidates.length === 0) return { hits: [], mode: "rrf-only" };
-  if (isFakeMode()) return rrfOnly(candidates);
+  if (isFakeMode() || isRerankOff()) return rrfOnly(candidates);
 
   const passages = candidates
     .map((c, i) => `[${i}] ${c.contextHeader}\n${c.content.slice(0, 900)}`)

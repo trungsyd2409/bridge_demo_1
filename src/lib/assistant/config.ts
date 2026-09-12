@@ -15,12 +15,12 @@ function modelList(envName: string, fallback: string): string[] {
   return (process.env[envName] ?? fallback).split(",").map((m) => m.trim()).filter(Boolean);
 }
 
-const LITE_MODELS = "gemini-3.1-flash-lite,gemini-3.5-flash-lite,gemini-3.5-flash,gemini-3.7-flash,gemini-3.6-flash";
-const FLASH_MODELS = "gemini-3.1-flash-lite,gemini-3.5-flash-lite,gemini-3.5-flash,gemini-3.7-flash,gemini-3.6-flash";
+const LITE_MODELS = process.env.GEMINI_MODELS ? process.env.GEMINI_MODELS : "gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.1-flash-lite-preview,gemini-3.1-flash-lite,gemini-flash-latest, gemini-3.6-flash";
+
 
 export const NLU_MODELS = modelList("AI_NLU_MODELS", LITE_MODELS);
 export const RERANK_MODELS = modelList("AI_RERANK_MODELS", LITE_MODELS);
-export const ANSWER_MODELS = modelList("AI_ANSWER_MODELS", `${FLASH_MODELS},${LITE_MODELS}`);
+export const ANSWER_MODELS = modelList("AI_ANSWER_MODELS", LITE_MODELS);
 
 // ---- Embedding: PHẢI khớp với pipeline (config/settings.py) ----
 export const EMBED_MODEL = "gemini-embedding-001";
@@ -50,4 +50,9 @@ export const MAX_MESSAGE_CHARS = 2_000;
 /** RAG_FAKE_GEMINI=1: chạy toàn bộ không gọi Gemini (khớp chế độ giả của pipeline). */
 export function isFakeMode(): boolean {
   return process.env.RAG_FAKE_GEMINI === "1";
+}
+
+/** AI_SKIP_RERANK=1: bỏ bước rerank để trả lời nhanh hơn (đổi lại kém chính xác hơn). */
+export function isRerankOff(): boolean {
+  return process.env.AI_SKIP_RERANK === "1";
 }
