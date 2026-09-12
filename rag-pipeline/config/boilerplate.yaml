@@ -1,0 +1,20 @@
+# Dòng nào KHỚP TOÀN BỘ với một mẫu dưới đây sẽ bị xoá ở bước 03.
+# Mẫu là regex, không phân biệt hoa thường. Thêm mẫu mới khi thấy rác trong data/clean/.
+# Kiểm tra bằng: python scripts/03_clean.py --only <id> rồi mở data/clean/<id>.md
+
+line_patterns:
+  - "was this page helpful\\??"
+  - "(yes|no)"
+  - "(print|share|email|download)( this page)?"
+  - "back to top"
+  - "skip to (main )?content"
+  - "last (updated|modified):?.*"
+  - "page \\d+( of \\d+)?"
+  - "\\d+"
+  - "on this page"
+  - "related (pages|information|links)"
+  - "(tell us|give) (your )?feedback.*"
+  - "we use cookies.*"
+  - "copyright.*"
+  - "(facebook|twitter|linkedin|youtube|instagram|x)"
+  - "- (facebook|twitter|linkedin|youtube|instagram|x)"

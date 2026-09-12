@@ -1,0 +1,154 @@
+# Danh sách nguồn ĐẦY ĐỦ. Cấu trúc giống sources.sample.yaml (xem giải thích ở file đó).
+# Link lấy từ rag-document-sources.md, kiểm tra ngày 10/09/2026.
+# Ưu tiên 3 chưa xác minh link: tìm trang chính thức rồi bỏ comment và điền url.
+
+# ===================== Ưu tiên 1 =====================
+
+- id: fwo_visa_holders
+  url: https://www.fairwork.gov.au/find-help-for/visa-holders-migrants
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_visa_holders_factsheet
+  url: https://www.fairwork.gov.au/tools-and-resources/fact-sheets/rights-and-obligations/visa-holders-and-migrant-workers-workplace-rights-and-entitlements
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_visa_protections
+  url: https://www.fairwork.gov.au/visa-protections
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_payslips_simple_english
+  url: https://www.fairwork.gov.au/tools-and-resources/language-help/english/pay-slips-and-record-keeping
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: no_payslip
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_record_keeping_factsheet
+  url: https://www.fairwork.gov.au/tools-and-resources/fact-sheets/rights-and-obligations/record-keeping-pay-slips
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: no_payslip
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_unpaid_trials
+  url: https://www.fairwork.gov.au/pay/unpaid-work/unpaid-trials
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: underpayment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_unpaid_work_hospitality
+  url: https://www.fairwork.gov.au/tools-and-resources/language-help/vietnamese
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: underpayment
+  industry: [hospitality]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+# Trang này là mục lục các bản dịch tiếng Việt. Mở trên trình duyệt, lấy link
+# từng tài liệu tiếng Việt (thường là PDF) rồi thêm thành nguồn riêng với language: vi.
+# - id: fwo_language_help_vietnamese
+#   url: https://www.fairwork.gov.au/tools-and-resources/language-help/vietnamese
+
+# ===================== Ưu tiên 2 =====================
+
+- id: swa_migrant_workers_overview
+  url: https://www.safeworkaustralia.gov.au/safety-topic/managing-health-and-safety/migrant-workers/overview
+  source: Safe Work Australia
+  type: html
+  language: en
+  topic: unsafe
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+- id: swa_whs_migrant_infosheet
+  url: https://safeworkaustralia.gov.au/sites/default/files/2024-11/whs-in-australia_english-nov2024.pdf
+  source: Safe Work Australia
+  type: pdf
+  language: en
+  topic: unsafe
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+- id: ahrc_sexual_harassment_workers
+  url: https://humanrights.gov.au/__data/assets/file/0037/56998/Factsheet-for-workers.pdf
+  source: Australian Human Rights Commission
+  type: pdf
+  language: en
+  topic: harassment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+- id: homeaffairs_vevo_check_conditions
+  url: https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/check-conditions-online
+  source: Department of Home Affairs
+  type: html
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+
+- id: student_visa_condition_8105
+  url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500?fbclid=IwY2xjawURf-JwZG9mBWV4dG4DYWVtAjEwAGJyaWQRMWw1VFJ2YUE0VnRsbWVUbG9zcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeFAUieZJnhJqtq8OvwTMprONMcZxEgGBvlfzYUulA2uURDL-VB3aUXm5CoME_aem_t2iEfItWgRNfF9Y5XLxpQA
+  source: Department of Home Affairs
+  type: html
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+# ===================== Ưu tiên 3 (chưa có link) =====================
+# Casual employees & casual loading   -> topic: underpayment      (fairwork.gov.au)
+# Penalty rates                       -> topic: underpayment      (fairwork.gov.au)
+# Deductions from pay                 -> topic: underpayment      (fairwork.gov.au)
+# National Employment Standards       -> topic: contract_hours    (fairwork.gov.au)
+# Sham contracting / ABN              -> topic: contract_hours    (fairwork.gov.au)
+# Unfair dismissal                    -> topic: unfair_dismissal  (fwc.gov.au)
+# Student visa condition 8105         -> topic: visa_threat, visa: [student] (immi.homeaffairs.gov.au)

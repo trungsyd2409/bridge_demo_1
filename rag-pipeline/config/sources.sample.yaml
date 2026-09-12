@@ -1,0 +1,46 @@
+# Bộ tài liệu MẪU: 3 nguồn (1 html, 2 pdf). Định dạng docx được kiểm tra trong tests/.
+# Dùng để chạy thử cả pipeline trong vài phút trước khi chạy sources.yaml đầy đủ.
+#
+# Mỗi tài liệu:
+#   id         : tên duy nhất, chỉ chữ thường/số/gạch dưới (dùng làm tên file)
+#   url        : link gốc
+#   source     : tên cơ quan (hiển thị khi trích dẫn)
+#   type       : html | pdf | docx
+#   language   : en | vi
+#   topic      : 1 trong 8 PROBLEM_TAGS
+#   industry / visa / employment : danh sách, "all" = áp dụng cho mọi nhóm
+#   priority   : 1 = bắt buộc, 2 = quan trọng, 3 = bổ sung
+#   (subtopic KHÔNG khai báo ở đây: bước 05 gắn cho từng chunk)
+
+- id: fwo_visa_holders
+  url: https://www.fairwork.gov.au/find-help-for/visa-holders-migrants
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: swa_whs_migrant_infosheet
+  url: https://safeworkaustralia.gov.au/sites/default/files/2024-11/whs-in-australia_english-nov2024.pdf
+  source: Safe Work Australia
+  type: pdf
+  language: en
+  topic: unsafe
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+- id: ahrc_sexual_harassment_workers
+  url: https://humanrights.gov.au/__data/assets/file/0037/56998/Factsheet-for-workers.pdf
+  source: Australian Human Rights Commission
+  type: pdf
+  language: en
+  topic: harassment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2

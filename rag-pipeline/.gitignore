@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+data/raw/
+data/extracted/
+data/clean/
+data/*.jsonl
+data/*.csv
+data/*.tmp
+reports/
+# data/rag.db cũng không commit ở đây; bước 09 sẽ copy nó sang project Next.js
+data/rag.db
+data/cache/

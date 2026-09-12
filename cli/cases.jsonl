@@ -1,0 +1,17 @@
+# Bộ câu hỏi thử trợ lý AI. Mỗi dòng một JSON; dòng bắt đầu bằng # là chú thích.
+# expect (tuỳ chọn): intent, urgent (true/false), source (regex khớp tiêu đề/URL nguồn được trích), notInsufficient
+# Thêm câu mới mỗi khi phát hiện trợ lý trả lời sai: bộ này sẽ bắt lỗi nếu nó quay lại.
+{"id": "pay1", "message": "Chủ không đưa payslip, trả tiền mặt", "expect": {"intent": "no_payslip", "urgent": false, "source": "pay ?slip"}}
+{"id": "pay2", "message": "Chủ trả em 18 đô một giờ, làm casual ở nhà hàng có đúng không?", "profile": {"employment": "casual", "industry": "hospitality"}, "expect": {"intent": "underpayment", "urgent": false}}
+{"id": "pay3", "message": "Em làm thử 2 ngày ở quán mà không được trả tiền", "expect": {"intent": "underpayment", "source": "trial"}}
+{"id": "pay4", "message": "Chủ trừ lương vì em làm vỡ đĩa", "expect": {"intent": "underpayment"}}
+{"id": "visa1", "message": "Gọi Fair Work thì có bị huỷ visa không?", "expect": {"intent": "visa_threat", "urgent": false, "source": "visa"}}
+{"id": "visa2", "message": "Em là du học sinh, được làm bao nhiêu giờ?", "profile": {"visa": "Du học sinh (Student)"}, "expect": {"intent": "visa_threat", "source": "student"}}
+{"id": "urg1", "message": "Chủ giữ hộ chiếu của em và doạ báo di trú", "expect": {"intent": "visa_threat", "urgent": true}}
+{"id": "urg2", "message": "chu giu ho chieu cua em", "expect": {"urgent": true}}
+{"id": "urg3", "message": "Em bị thương ở tay khi làm ở nông trại", "profile": {"industry": "farm"}, "expect": {"intent": "unsafe", "urgent": true}}
+{"id": "safe1", "message": "Làm nail có phải tự mua găng tay khẩu trang không?", "profile": {"industry": "Nail / Làm đẹp"}, "expect": {"intent": "unsafe", "urgent": false}}
+{"id": "har1", "message": "Quản lý hay nói những câu tục tĩu với em", "expect": {"intent": "harassment"}}
+{"id": "dis1", "message": "Em bị đuổi việc sau khi hỏi về lương", "expect": {"intent": "unfair_dismissal"}}
+{"id": "abn1", "message": "Chủ bắt em làm ABN thay vì trả lương bình thường", "profile": {"industry": "cleaning"}, "expect": {"intent": "contract_hours"}}
+{"id": "off1", "message": "Xin chào", "expect": {"urgent": false}}

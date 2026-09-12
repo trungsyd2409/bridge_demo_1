@@ -1,0 +1,59 @@
+# Danh sách giá trị hợp lệ cho mọi tag.
+# topic PHẢI khớp với PROBLEM_TAGS trong src/lib/aiAssistant.ts của app.
+# Sửa ở đây thì nhớ sửa bên app (và ngược lại).
+
+topics:
+  underpayment:
+    - minimum_wage
+    - award_rates
+    - casual_loading
+    - penalty_rates
+    - overtime
+    - cash_pay
+    - unpaid_trial
+    - deductions
+    - piece_rates
+    - superannuation
+    - recover_wages
+  no_payslip:
+    - payslip_rules
+    - record_keeping
+    - tax_tfn
+  contract_hours:
+    - employment_types
+    - nes
+    - leave
+    - breaks_rosters
+    - sham_contracting
+  visa_threat:
+    - visa_rights
+    - student_work_limit
+    - whv_specified_work
+    - sponsored_visa
+    - visa_protections
+    - passport_withholding
+  unsafe:
+    - whs_rights
+    - ppe
+    - injury_workers_comp
+    - industry_hazards
+  harassment:
+    - sexual_harassment
+    - bullying
+    - discrimination
+  unfair_dismissal:
+    - dismissal_rights
+    - notice_redundancy
+    - adverse_action
+  general:
+    - evidence_tips
+    - job_ad_red_flags
+    - get_help
+
+# Các trường lọc lấy giá trị từ 5 câu hỏi onboarding.
+# "all" nghĩa là tài liệu áp dụng cho mọi nhóm.
+industry: [all, hospitality, beauty, cleaning, retail, farm]
+visa: [all, student, whv, temp_work, pr]
+employment: [all, casual, part_time, full_time, contractor]
+language: [en, vi]
+doc_types: [html, pdf, docx]
