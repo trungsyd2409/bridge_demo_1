@@ -10,17 +10,32 @@ import path from "node:path";
 // nên đặt model mới nhất trước và giữ vài lựa chọn dự phòng.
 //
 // Xem model nào key của bạn dùng được:  npm run ask -- --models
-// Rồi ghi đè trong .env.local, ví dụ:   AI_NLU_MODELS=gemini-3.1-flash-lite
+// Rồi ghi đè trong .env.local, ví dụ:   AI_NLU_MODELS=gemini-3.5-flash-lite
 function modelList(envName: string, fallback: string): string[] {
   return (process.env[envName] ?? fallback).split(",").map((m) => m.trim()).filter(Boolean);
 }
 
-const LITE_MODELS = process.env.GEMINI_MODELS ? process.env.GEMINI_MODELS : "gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.1-flash-lite-preview,gemini-3.1-flash-lite,gemini-flash-latest, gemini-3.6-flash";
+// BA TẦNG — trước đây cả ba bước dùng chung một danh sách flash-lite, nghĩa là bước
+// viết câu trả lời (bước cần suy luận nhất) cũng chạy trên model yếu nhất.
+//   FLASH  — thông minh hơn, đắt hơn. Dùng cho bước cần suy luận.
+//   LITE   — rẻ, nhanh; làm dự phòng khi FLASH lỗi hoặc hết quota.
+//   ALIAS  — "…-latest" là bí danh Google tự trỏ sang bản mới. Để CUỐI cùng làm phao cứu
+//            sinh: nếu để đầu thì model đổi ngầm, kết quả `npm run ask:eval` hết lặp lại được.
+const FLASH_MODELS = "gemini-3.8-flash,gemini-3.7-flash,gemini-3.6-flash";
+const LITE_MODELS = "gemini-3.5-flash-lite,gemini-3.1-flash-lite";
+const ALIAS_MODELS = "gemini-flash-latest,gemini-flash-lite-latest";
 
+// GEMINI_MODELS: biến cũ, nếu đã đặt thì nó thay cho cả ba tầng (giữ để không vỡ deploy cũ).
+const OVERRIDE_ALL = process.env.GEMINI_MODELS?.trim();
+const chain = (head: string) => OVERRIDE_ALL || `${head},${LITE_MODELS},${ALIAS_MODELS}`;
 
-export const NLU_MODELS = modelList("AI_NLU_MODELS", LITE_MODELS);
-export const RERANK_MODELS = modelList("AI_RERANK_MODELS", LITE_MODELS);
-export const ANSWER_MODELS = modelList("AI_ANSWER_MODELS", LITE_MODELS);
+// Hiểu câu hỏi tiếng Việt (kể cả gõ không dấu, lẫn tiếng Anh) — flash-lite hay phân loại sai.
+export const NLU_MODELS = modelList("AI_NLU_MODELS", chain(FLASH_MODELS));
+// Chấm điểm 12 đoạn văn: prompt dài nhất, tốn nhất. Muốn tiết kiệm thì đặt
+// AI_RERANK_MODELS=gemini-3.5-flash-lite trong .env.local rồi đo lại bằng npm run ask:eval.
+export const RERANK_MODELS = modelList("AI_RERANK_MODELS", chain(FLASH_MODELS));
+// Viết câu trả lời cuối: bước quan trọng nhất, luôn ưu tiên model mạnh nhất.
+export const ANSWER_MODELS = modelList("AI_ANSWER_MODELS", chain(FLASH_MODELS));
 
 // ---- Embedding: PHẢI khớp với pipeline (config/settings.py) ----
 export const EMBED_MODEL = "gemini-embedding-001";

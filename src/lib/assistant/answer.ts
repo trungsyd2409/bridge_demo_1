@@ -152,12 +152,21 @@ export function fallbackAnswer(nlu: NluResult, profile: UserProfile, evidence: E
       ? `Bạn nói được trả $${rate.toFixed(2)}/giờ — thấp hơn mức tối thiểu ${cmp.isCasual ? "cho casual " : ""}$${cmp.minimum.toFixed(2)}/giờ khoảng $${cmp.shortfallPerHour.toFixed(2)} mỗi giờ.`
       : `Bạn nói được trả $${rate.toFixed(2)}/giờ, không thấp hơn mức tối thiểu quốc gia $${cmp.minimum.toFixed(2)}/giờ — nhưng award của ngành bạn có thể cao hơn.`;
   }
+  // Mẫu dự phòng là văn bản VIẾT SẴN, không rút ra từ chunk RAG. Trích [n] trỏ vào chunk RAG
+  // ở đây là gán nguồn cho chữ không lấy từ nguồn đó — người dùng bấm vào sẽ thấy tài liệu
+  // chẳng liên quan. Chỉ trích nguồn tra bảng (lương) hoặc API (ABN) vì whatIsHappening
+  // ở trên thật sự được tính từ chúng.
+  const cited = evidence
+    .map((e, i) => ({ kind: e.kind, n: i + 1 }))
+    .filter((x) => x.kind !== "rag")
+    .map((x) => x.n)
+    .slice(0, 3);
   return {
     ...t,
     whatIsHappening,
     whoCanHelp: contacts.map((c) => `${c.name}${c.phone ? ` — ${c.phone}` : ""}`),
-    citations: evidence.slice(0, 3).map((_, i) => i + 1),
-    grounding: evidence.length ? "partial" : "insufficient",
+    citations: cited,
+    grounding: cited.length ? "partial" : "insufficient",
   };
 }
 
@@ -171,7 +180,8 @@ export async function generateAnswer(
       prompt: buildPrompt(message, nlu, profile, evidence, contacts),
       schema: SCHEMA,
       timeoutMs: TIMEOUT.answer,
-      temperature: 0.2,
+      // 0 = ep model bam sat EVIDENCE. 0.2 cho phep no "tu do dien dat" — voi so lieu luat thi do la bia.
+      temperature: 0,
     });
     const answer = validateAnswer(data, evidence.length);
     if (answer) return { answer, mode: "llm", model };

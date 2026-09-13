@@ -142,11 +142,40 @@ async function ask(message: string, profile: UserProfile) {
 
 // ---------- 5. Chạy bộ câu hỏi từ file ----------
 
+/**
+ * Kỳ vọng của một câu test. Bốn trường đầu là bản cũ; phần còn lại thêm vào để bộ test
+ * đo được NỘI DUNG câu trả lời, không chỉ nhãn intent/urgent.
+ *
+ * Vì sao cần: bộ cũ đạt 14/14 trong khi trợ lý vẫn trả lời sai — nó không hề kiểm
+ * câu trả lời nói gì, nguồn trích có đúng chủ đề không, hay con số ở đâu ra.
+ */
+interface Expect {
+  intent?: string;
+  urgent?: boolean;
+  risk?: "low" | "medium" | "high";
+  /** ÍT NHẤT một nguồn được trích khớp regex này. */
+  source?: string;
+  /** MỌI nguồn được trích phải khớp regex này — bắt lỗi trích tài liệu lạc chủ đề. */
+  sourceAll?: string;
+  notInsufficient?: boolean;
+  /** Mức grounding chính xác phải bằng giá trị này. */
+  grounding?: "grounded" | "partial" | "insufficient";
+  /** Mọi regex phải XUẤT HIỆN trong câu trả lời (dùng cho con số bắt buộc đúng). */
+  contains?: string[];
+  /** Mọi regex KHÔNG được xuất hiện (dùng cho số liệu cũ / khẳng định quá chắc). */
+  notContains?: string[];
+  /** Nêu số tiền thì bắt buộc phải có trích dẫn và không được tự khai "chưa đủ nguồn". */
+  noBareMoney?: boolean;
+  mode?: "llm" | "fallback";
+}
+
 interface Case {
   id?: string;
   message: string;
   profile?: Partial<Record<ProfileKey, string>>;
-  expect?: { intent?: string; urgent?: boolean; source?: string; notInsufficient?: boolean };
+  expect?: Expect;
+  /** Ghi chú cho người đọc file, không ảnh hưởng kết quả. */
+  note?: string;
 }
 
 function readCases(file: string): Case[] {
@@ -155,17 +184,58 @@ function readCases(file: string): Case[] {
   return file.endsWith(".jsonl") ? lines.map((l) => JSON.parse(l) as Case) : lines.map((message) => ({ message }));
 }
 
-function checkExpect(e: Case["expect"], r: AssistantResponse): string[] {
+/** Gộp toàn bộ chữ trong câu trả lời để dò regex. */
+function answerText(r: AssistantResponse): string {
+  const a = r.answer;
+  return [a.whatIsHappening, a.whyItMatters, ...a.whatToDo, ...a.evidenceToKeep, ...a.whoCanHelp].join(" \n");
+}
+
+/** "$26.44", "$1,234", "26.44 đô", "$18/giờ" — đủ để bắt con số tiền trong câu trả lời. */
+const MONEY = /\$\s?\d[\d.,]*|\b\d+[.,]\d{2}\s*(?:đô|\$|AUD)/gi;
+
+function checkExpect(e: Expect | undefined, r: AssistantResponse): string[] {
   if (!e) return [];
   const fails: string[] = [];
+  const text = answerText(r);
+  const cited = r.sources.filter((s) => r.answer.citations.includes(s.n));
+
   if (e.intent && r.intent !== e.intent) fails.push(`intent là ${r.intent}, cần ${e.intent}`);
+  if (e.risk && r.risk !== e.risk) fails.push(`risk là ${r.risk}, cần ${e.risk}`);
   if (e.urgent !== undefined && r.urgent.show !== e.urgent) fails.push(`khối khẩn cấp ${r.urgent.show ? "có" : "không"}, cần ${e.urgent ? "có" : "không"}`);
+  if (e.mode && r.mode !== e.mode) fails.push(`chạy chế độ ${r.mode}, cần ${e.mode}`);
+
   if (e.source) {
     const re = new RegExp(e.source, "i");
-    const cited = r.sources.filter((s) => r.answer.citations.includes(s.n));
     if (!cited.some((s) => re.test(`${s.title} ${s.url ?? ""}`))) fails.push(`không có nguồn được trích khớp /${e.source}/`);
   }
+  // Mọi nguồn phải đúng chủ đề: bắt trường hợp hỏi sa thải mà trích 4 tài liệu payslip.
+  if (e.sourceAll) {
+    const re = new RegExp(e.sourceAll, "i");
+    const lac = cited.filter((s) => !re.test(`${s.title} ${s.url ?? ""}`));
+    if (lac.length) fails.push(`nguồn lạc chủ đề (cần khớp /${e.sourceAll}/): ${lac.map((s) => `[${s.n}] ${s.title.slice(0, 60)}`).join(" | ")}`);
+  }
+
+  if (e.grounding && r.answer.grounding !== e.grounding) fails.push(`grounding là "${r.answer.grounding}", cần "${e.grounding}"`);
   if (e.notInsufficient && r.answer.grounding === "insufficient") fails.push("trả lời 'chưa đủ nguồn'");
+
+  for (const pat of e.contains ?? []) {
+    if (!new RegExp(pat, "i").test(text)) fails.push(`câu trả lời thiếu /${pat}/`);
+  }
+  for (const pat of e.notContains ?? []) {
+    const hit = new RegExp(pat, "i").exec(text);
+    if (hit) fails.push(`câu trả lời chứa /${pat}/ (khớp "${hit[0]}") — không được phép`);
+  }
+
+  // Chống bịa số: có số tiền thì phải có nguồn đỡ lưng.
+  if (e.noBareMoney) {
+    const money = [...new Set(text.match(MONEY) ?? [])];
+    if (money.length && r.answer.citations.length === 0) {
+      fails.push(`nêu số tiền ${money.slice(0, 3).join(", ")} nhưng không trích nguồn nào`);
+    }
+    if (money.length && r.answer.grounding === "insufficient") {
+      fails.push(`nêu số tiền ${money.slice(0, 3).join(", ")} trong khi tự khai "chưa đủ nguồn"`);
+    }
+  }
   return fails;
 }
 
@@ -319,15 +389,22 @@ async function checkModels() {
     console.log(c.red("\nKhông model nào dùng được. Kiểm tra key, hạn mức, hoặc tạo key mới ở aistudio.google.com"));
     return false;
   }
-  // 4. Gợi ý cấu hình: lite (rẻ, nhanh) cho NLU/rerank; flash thường trước, lite dự phòng cho câu trả lời
-  const lite = usable.filter((m) => /lite/.test(m));
-  const full = usable.filter((m) => !/lite/.test(m));
-  const small = (lite.length ? lite : usable).slice(0, 2).join(",");
-  const answer = [...full.slice(0, 1), ...lite.slice(0, 1)].join(",") || usable[0];
+  // 4. Gợi ý cấu hình. Cả ba bước (hiểu câu hỏi, chấm điểm đoạn văn, viết câu trả lời) đều là
+  // việc suy luận, nên flash đi trước và lite chỉ làm dự phòng. Trước đây chỗ này gợi ý lite cho
+  // NLU/rerank — dán vào .env.local là vô hiệu hoá đúng tầng flash mà config.ts vừa đặt mặc định.
+  // Bỏ bí danh "-latest" khỏi gợi ý: nó đổi model ngầm, chạy `npm run ask:eval` hai lần ra hai
+  // kết quả khác nhau mà không biết vì sao.
+  const version = (m: string) => Number(/gemini-(\d+(?:\.\d+)?)/.exec(m)?.[1] ?? 0);
+  const byNewest = (a: string, b: string) => version(b) - version(a);
+  const pinned = usable.filter((m) => !/latest/.test(m));
+  const flash = pinned.filter((m) => !/lite/.test(m)).sort(byNewest);
+  const lite = pinned.filter((m) => /lite/.test(m)).sort(byNewest);
+  const chain = [...flash.slice(0, 2), ...lite.slice(0, 1)].join(",") || usable[0];
   console.log(c.bold("\nDán vào .env.local (rồi khởi động lại npm run dev):\n"));
-  console.log(`AI_NLU_MODELS=${small}`);
-  console.log(`AI_RERANK_MODELS=${small}`);
-  console.log(`AI_ANSWER_MODELS=${answer}`);
+  console.log(`AI_NLU_MODELS=${chain}`);
+  console.log(`AI_RERANK_MODELS=${chain}`);
+  console.log(`AI_ANSWER_MODELS=${chain}`);
+  console.log(c.dim("\nMuốn tiết kiệm: đổi riêng AI_RERANK_MODELS sang " + (lite[0] ?? "bản lite") + " rồi chạy npm run ask:eval để xem có tụt điểm không."));
   return true;
 }
 

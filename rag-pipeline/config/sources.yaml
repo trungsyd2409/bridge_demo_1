@@ -70,13 +70,16 @@
   employment: [all]
   priority: 1
 
-- id: fwo_unpaid_work_hospitality
+# SỬA: url này là trang MỤC LỤC bản dịch tiếng Việt, không phải trang "unpaid work",
+# lại gắn nhãn language: en + topic: underpayment + industry: hospitality. Sai nhãn khiến
+# bộ lọc theo ngành loại nhầm chunk, và chunk tiếng Việt bị tìm bằng câu truy vấn tiếng Anh.
+- id: fwo_language_help_vietnamese
   url: https://www.fairwork.gov.au/tools-and-resources/language-help/vietnamese
   source: Fair Work Ombudsman
   type: html
-  language: en
-  topic: underpayment
-  industry: [hospitality]
+  language: vi
+  topic: general
+  industry: [all]
   visa: [all]
   employment: [all]
   priority: 1
@@ -133,10 +136,200 @@
   priority: 2
 
 
-- id: student_visa_condition_8105
-  url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500?fbclid=IwY2xjawURf-JwZG9mBWV4dG4DYWVtAjEwAGJyaWQRMWw1VFJ2YUE0VnRsbWVUbG9zcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeFAUieZJnhJqtq8OvwTMprONMcZxEgGBvlfzYUulA2uURDL-VB3aUXm5CoME_aem_t2iEfItWgRNfF9Y5XLxpQA
+# SỬA: url cũ dính tham số theo dõi ?fbclid=... (link copy từ Facebook) và khai type: pdf
+# trong khi đây là trang html. Fetch bằng link đó dễ ra nội dung khác hoặc lỗi.
+- id: student_visa_500
+  url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500
+  source: Department of Home Affairs
+  type: html
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [student]
+  employment: [all]
+  priority: 2
+
+# ===================== Ưu tiên 3 — đã có link (kiểm tra 12/09/2026) =====================
+# Bổ sung sau khi truy vấn rag.db và phát hiện: 106 chunk nhưng topic unfair_dismissal
+# chỉ có 1 chunk, và KHÔNG chunk nào chứa chữ "dismiss" hay mốc "21 days".
+# Trợ lý vì thế không thể trả lời đúng bất kỳ câu hỏi nào về sa thải.
+
+# ---- Sa thải: lỗ hổng lớn nhất ----
+- id: fwo_unfair_dismissal
+  url: https://www.fairwork.gov.au/ending-employment/unfair-dismissal
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: unfair_dismissal
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+# Quan trọng nhất cho tình huống "bị đuổi việc sau khi hỏi về lương": đây là adverse
+# action (general protections), không phải unfair dismissal thuần tuý. Cũng nêu mốc 21 ngày.
+- id: fwo_protections_at_work
+  url: https://www.fairwork.gov.au/employment-conditions/protections-at-work
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: unfair_dismissal
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_protections_at_work_factsheet
+  url: https://www.fairwork.gov.au/tools-and-resources/fact-sheets/rights-and-obligations/protections-at-work
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: unfair_dismissal
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwc_deadlines
+  url: https://www.fwc.gov.au/apply-or-lodge/deadlines
+  source: Fair Work Commission
+  type: html
+  language: en
+  topic: unfair_dismissal
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+# ---- Lương: casual loading, penalty rates, trừ lương, mức tối thiểu ----
+- id: fwo_casual_employees
+  url: https://www.fairwork.gov.au/starting-employment/types-of-employees/casual-employees
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: underpayment
+  industry: [all]
+  visa: [all]
+  employment: [casual]
+  priority: 1
+
+- id: fwo_penalty_rates
+  url: https://www.fairwork.gov.au/pay-and-wages/penalty-rates-allowances-and-other-payments/penalty-rates
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: underpayment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_deducting_pay
+  url: https://www.fairwork.gov.au/pay-and-wages/deductions-and-related-issues/deducting-pay
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: underpayment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_minimum_wages
+  url: https://www.fairwork.gov.au/pay-and-wages/minimum-wages
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: underpayment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_minimum_wages_factsheet
+  url: https://www.fairwork.gov.au/tools-and-resources/fact-sheets/minimum-workplace-entitlements/minimum-wages
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: underpayment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+# ---- Hợp đồng, ABN, nghỉ phép ----
+- id: fwo_sham_contracting
+  url: https://www.fairwork.gov.au/find-help-for/independent-contractors/sham-contracting
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: contract_hours
+  industry: [all]
+  visa: [all]
+  employment: [contractor]
+  priority: 1
+
+- id: fwo_national_employment_standards
+  url: https://www.fairwork.gov.au/employment-conditions/national-employment-standards
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: contract_hours
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_nes_factsheet
+  url: https://www.fairwork.gov.au/tools-and-resources/fact-sheets/minimum-workplace-entitlements/introduction-to-the-national-employment-standards
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: contract_hours
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+# ---- Quấy rối, phân biệt đối xử, bắt nạt ----
+- id: fwo_workplace_discrimination_factsheet
+  url: https://www.fairwork.gov.au/tools-and-resources/fact-sheets/rights-and-obligations/workplace-discrimination
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: harassment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+- id: fwo_bullying
+  url: https://www.fairwork.gov.au/employment-conditions/bullying-in-the-workplace
+  source: Fair Work Ombudsman
+  type: html
+  language: en
+  topic: harassment
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 2
+
+# ---- Visa: điều kiện làm việc của du học sinh ----
+- id: immi_student_work_restrictions
+  url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500/temporary-relaxation-of-working-hours-for-student-visa-holders
   source: Department of Home Affairs
   type: pdf
+  language: en
+  topic: visa_threat
+  industry: [all]
+  visa: [student]
+  employment: [all]
+  priority: 1
+
+- id: immi_visa_conditions_list
+  url: https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/conditions-list
+  source: Department of Home Affairs
+  type: html
   language: en
   topic: visa_threat
   industry: [all]
@@ -144,11 +337,25 @@
   employment: [all]
   priority: 2
 
-# ===================== Ưu tiên 3 (chưa có link) =====================
-# Casual employees & casual loading   -> topic: underpayment      (fairwork.gov.au)
-# Penalty rates                       -> topic: underpayment      (fairwork.gov.au)
-# Deductions from pay                 -> topic: underpayment      (fairwork.gov.au)
-# National Employment Standards       -> topic: contract_hours    (fairwork.gov.au)
-# Sham contracting / ABN              -> topic: contract_hours    (fairwork.gov.au)
-# Unfair dismissal                    -> topic: unfair_dismissal  (fwc.gov.au)
-# Student visa condition 8105         -> topic: visa_threat, visa: [student] (immi.homeaffairs.gov.au)
+# ---- Tổng quan (dùng cho câu hỏi chung) ----
+- id: fwo_information_statement
+  url: https://www.fairwork.gov.au/sites/default/files/migration/724/Fair-Work-Information-Statement.pdf
+  source: Fair Work Ombudsman
+  type: pdf
+  language: en
+  topic: general
+  industry: [all]
+  visa: [all]
+  employment: [all]
+  priority: 1
+
+- id: fwo_casual_information_statement
+  url: https://www.fairwork.gov.au/sites/default/files/migration/724/casual-employment-information-statement.pdf
+  source: Fair Work Ombudsman
+  type: pdf
+  language: en
+  topic: contract_hours
+  industry: [all]
+  visa: [all]
+  employment: [casual]
+  priority: 2

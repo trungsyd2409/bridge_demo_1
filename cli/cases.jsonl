@@ -1,17 +1,87 @@
 # Bộ câu hỏi thử trợ lý AI. Mỗi dòng một JSON; dòng bắt đầu bằng # là chú thích.
-# expect (tuỳ chọn): intent, urgent (true/false), source (regex khớp tiêu đề/URL nguồn được trích), notInsufficient
+#
+# expect có thể gồm:
+#   intent, risk, urgent, mode         nhãn phân loại
+#   source                             ÍT NHẤT một nguồn được trích khớp regex
+#   sourceAll                          MỌI nguồn được trích phải khớp regex  (bắt trích tài liệu lạc chủ đề)
+#   grounding / notInsufficient        mức grounding
+#   contains / notContains             regex phải / không được xuất hiện trong câu trả lời
+#   noBareMoney                        nêu số tiền thì bắt buộc có trích dẫn và không được khai "chưa đủ nguồn"
+#
 # Thêm câu mới mỗi khi phát hiện trợ lý trả lời sai: bộ này sẽ bắt lỗi nếu nó quay lại.
-{"id": "pay1", "message": "Chủ không đưa payslip, trả tiền mặt", "expect": {"intent": "no_payslip", "urgent": false, "source": "pay ?slip"}}
-{"id": "pay2", "message": "Chủ trả em 18 đô một giờ, làm casual ở nhà hàng có đúng không?", "profile": {"employment": "casual", "industry": "hospitality"}, "expect": {"intent": "underpayment", "urgent": false}}
-{"id": "pay3", "message": "Em làm thử 2 ngày ở quán mà không được trả tiền", "expect": {"intent": "underpayment", "source": "trial"}}
-{"id": "pay4", "message": "Chủ trừ lương vì em làm vỡ đĩa", "expect": {"intent": "underpayment"}}
-{"id": "visa1", "message": "Gọi Fair Work thì có bị huỷ visa không?", "expect": {"intent": "visa_threat", "urgent": false, "source": "visa"}}
-{"id": "visa2", "message": "Em là du học sinh, được làm bao nhiêu giờ?", "profile": {"visa": "Du học sinh (Student)"}, "expect": {"intent": "visa_threat", "source": "student"}}
-{"id": "urg1", "message": "Chủ giữ hộ chiếu của em và doạ báo di trú", "expect": {"intent": "visa_threat", "urgent": true}}
-{"id": "urg2", "message": "chu giu ho chieu cua em", "expect": {"urgent": true}}
-{"id": "urg3", "message": "Em bị thương ở tay khi làm ở nông trại", "profile": {"industry": "farm"}, "expect": {"intent": "unsafe", "urgent": true}}
-{"id": "safe1", "message": "Làm nail có phải tự mua găng tay khẩu trang không?", "profile": {"industry": "Nail / Làm đẹp"}, "expect": {"intent": "unsafe", "urgent": false}}
-{"id": "har1", "message": "Quản lý hay nói những câu tục tĩu với em", "expect": {"intent": "harassment"}}
-{"id": "dis1", "message": "Em bị đuổi việc sau khi hỏi về lương", "expect": {"intent": "unfair_dismissal"}}
-{"id": "abn1", "message": "Chủ bắt em làm ABN thay vì trả lương bình thường", "profile": {"industry": "cleaning"}, "expect": {"intent": "contract_hours"}}
-{"id": "off1", "message": "Xin chào", "expect": {"urgent": false}}
+# Con số đối chiếu: lương tối thiểu quốc gia $26.44/giờ, casual $33.05/giờ (wages.ts).
+
+# ============ Trả thiếu lương ============
+{"id": "pay1", "message": "Chủ không đưa payslip, trả tiền mặt", "expect": {"intent": "no_payslip", "urgent": false, "source": "pay ?slip", "sourceAll": "pay ?slip|record|wage|pay"}}
+{"id": "pay2", "message": "Chủ trả em 18 đô một giờ, làm casual ở nhà hàng có đúng không?", "profile": {"employment": "casual", "industry": "hospitality"}, "expect": {"intent": "underpayment", "urgent": false, "noBareMoney": true, "contains": ["33[.,]05|26[.,]44"], "notInsufficient": true}}
+{"id": "pay3", "message": "Em làm thử 2 ngày ở quán mà không được trả tiền", "expect": {"intent": "underpayment", "source": "trial", "noBareMoney": true}}
+{"id": "pay4", "message": "Chủ trừ lương vì em làm vỡ đĩa", "expect": {"intent": "underpayment", "source": "deduct|trừ|pay", "noBareMoney": true}}
+{"id": "pay5", "message": "Chủ trả em 15 đô một giờ tiền mặt, nói tiền mặt thì rẻ hơn", "expect": {"intent": "underpayment", "noBareMoney": true, "contains": ["26[.,]44|33[.,]05"], "notInsufficient": true}}
+{"id": "pay6", "message": "Em làm chủ nhật mà vẫn nhận đúng tiền như ngày thường", "expect": {"intent": "underpayment", "source": "penalty|rate|pay", "noBareMoney": true}}
+{"id": "pay7", "message": "Em làm 55 tiếng một tuần, chủ không trả thêm giờ tăng ca", "expect": {"intent": "underpayment", "noBareMoney": true}}
+{"id": "pay8", "message": "chu tra em 20 do mot gio co dung khong", "note": "gõ không dấu — NLU phải hiểu được", "expect": {"intent": "underpayment", "noBareMoney": true}}
+{"id": "pay9", "message": "Em làm casual, chủ nói casual không được cộng thêm đồng nào", "profile": {"employment": "casual"}, "expect": {"intent": "underpayment", "source": "casual|loading|pay", "contains": ["casual"], "noBareMoney": true}}
+
+# ============ Không có payslip ============
+{"id": "ps2", "message": "Chủ nói trả tiền mặt thì không cần payslip", "expect": {"intent": "no_payslip", "source": "pay ?slip|record", "notInsufficient": true}}
+{"id": "ps3", "message": "chu khong dua payslip cho em bao gio", "note": "gõ không dấu", "expect": {"intent": "no_payslip", "source": "pay ?slip|record"}}
+{"id": "ps4", "message": "Em xin bảng lương 6 tháng trước, chủ nói không lưu giữ gì cả", "expect": {"intent": "no_payslip", "source": "record|pay ?slip"}}
+
+# ============ Visa ============
+{"id": "visa1", "message": "Gọi Fair Work thì có bị huỷ visa không?", "expect": {"intent": "visa_threat", "urgent": false, "source": "visa", "notInsufficient": true}}
+{"id": "visa2", "message": "Em là du học sinh, được làm bao nhiêu giờ?", "profile": {"visa": "Du học sinh (Student)"}, "expect": {"intent": "visa_threat", "source": "student|visa", "notInsufficient": true}}
+{"id": "visa3", "message": "Chủ doạ báo di trú nếu em đòi tiền lương", "expect": {"intent": "visa_threat", "risk": "medium", "source": "visa|protection"}}
+{"id": "visa4", "message": "Em lỡ làm quá số giờ visa cho phép, giờ đòi lương thì có bị gì không?", "note": "câu khó: phải nói được quyền lao động không phụ thuộc việc vi phạm điều kiện visa", "expect": {"intent": "visa_threat", "source": "visa|protection"}}
+{"id": "visa5", "message": "Working holiday visa có được trả lương bằng người Úc không?", "profile": {"visa": "whv"}, "expect": {"intent": "visa_threat", "notInsufficient": true, "noBareMoney": true}}
+{"id": "visa6", "message": "chu doa huy visa cua em neu em nghi lam", "note": "gõ không dấu", "expect": {"intent": "visa_threat"}}
+{"id": "urg1", "message": "Chủ giữ hộ chiếu của em và doạ báo di trú", "expect": {"intent": "visa_threat", "urgent": true, "risk": "high"}}
+{"id": "urg2", "message": "chu giu ho chieu cua em", "expect": {"urgent": true, "risk": "high"}}
+
+# ============ An toàn lao động ============
+{"id": "urg3", "message": "Em bị thương ở tay khi làm ở nông trại", "profile": {"industry": "farm"}, "expect": {"intent": "unsafe", "urgent": true, "risk": "high"}}
+{"id": "safe1", "message": "Làm nail có phải tự mua găng tay khẩu trang không?", "profile": {"industry": "Nail / Làm đẹp"}, "expect": {"intent": "unsafe", "urgent": false, "source": "safe|health|whs", "notInsufficient": true}}
+{"id": "safe2", "message": "Chủ bắt em pha hoá chất mà không phát găng tay", "expect": {"intent": "unsafe", "source": "safe|health|whs"}}
+{"id": "safe3", "message": "Em bị bỏng dầu ở bếp, chủ nói tự đi khám tự trả tiền", "expect": {"intent": "unsafe", "urgent": true}}
+{"id": "safe4", "message": "bi thuong o cho lam thi phai lam sao", "note": "gõ không dấu", "expect": {"intent": "unsafe", "urgent": true}}
+
+# ============ Quấy rối, phân biệt đối xử ============
+{"id": "har1", "message": "Quản lý hay nói những câu tục tĩu với em", "expect": {"intent": "harassment", "source": "harass|discrimin|bully|right"}}
+{"id": "har2", "message": "Chủ chửi em và nói người Việt làm chậm", "expect": {"intent": "harassment", "source": "discrimin|harass|right"}}
+{"id": "har3", "message": "Đồng nghiệp hay trêu chọc và cô lập em", "expect": {"intent": "harassment", "source": "bully|harass|discrimin|right"}}
+{"id": "har4", "message": "bi quay roi o cho lam phai bao ai", "note": "gõ không dấu", "expect": {"intent": "harassment"}}
+
+# ============ Sa thải  —  rag.db hiện KHÔNG có tài liệu về mảng này ============
+# Các câu dưới đây sẽ FAIL cho tới khi bổ sung nguồn vào rag-pipeline/config/sources.yaml
+# rồi build lại rag.db. Đó là mục đích: bộ test phải nhìn thấy lỗ hổng dữ liệu.
+{"id": "dis1", "message": "Em bị đuổi việc sau khi hỏi về lương", "note": "thực chất là adverse action / general protections, không chỉ unfair dismissal", "expect": {"intent": "unfair_dismissal", "sourceAll": "dismiss|protection|ending-employment|fwc|termination", "contains": ["21"], "notInsufficient": true}}
+{"id": "dis2", "message": "Em bị đuổi việc, có bao nhiêu ngày để nộp đơn khiếu nại?", "expect": {"intent": "unfair_dismissal", "contains": ["21 ngày|21 days|\\b21\\b"], "notInsufficient": true}}
+{"id": "dis3", "message": "Chủ cắt hết ca làm của em sau khi em hỏi về tiền lương", "expect": {"intent": "unfair_dismissal", "source": "protection|dismiss|right"}}
+{"id": "dis4", "message": "Em mới làm được 3 tháng thì bị đuổi, có khiếu nại được không?", "note": "phải nêu điều kiện làm tối thiểu 6 tháng (12 tháng nếu quán dưới 15 người)", "expect": {"intent": "unfair_dismissal", "contains": ["6 tháng|6 months|sáu tháng"], "notInsufficient": true}}
+{"id": "dis5", "message": "bi duoi viec sau khi hoi ve luong", "note": "gõ không dấu", "expect": {"intent": "unfair_dismissal"}}
+{"id": "dis6", "message": "Quán em chỉ có 8 người, em làm 8 tháng thì bị cho nghỉ", "expect": {"intent": "unfair_dismissal", "contains": ["12 tháng|12 months|nhỏ|small business"]}}
+
+# ============ Hợp đồng, ABN, giờ làm ============
+{"id": "abn1", "message": "Chủ bắt em làm ABN thay vì trả lương bình thường", "profile": {"industry": "cleaning"}, "expect": {"intent": "contract_hours", "source": "contract|abn|sham|employ"}}
+{"id": "ct1", "message": "Chủ đưa em ký giấy nói em là contractor, em có nên ký không?", "expect": {"intent": "contract_hours", "source": "contract|sham|abn|employ"}}
+{"id": "ct2", "message": "Em làm casual thì có được nghỉ ốm có lương không?", "profile": {"employment": "casual"}, "expect": {"intent": "contract_hours", "source": "leave|casual|nes|entitle|employ"}}
+{"id": "ct3", "message": "Chủ đổi lịch làm liên tục, báo trước một tiếng", "expect": {"intent": "contract_hours"}}
+{"id": "ct4", "message": "Em làm part-time 20 giờ một tuần, có được nghỉ phép năm không?", "profile": {"employment": "part_time"}, "expect": {"intent": "contract_hours", "source": "leave|nes|entitle|employ"}}
+
+# ============ Ngoài phạm vi  —  KHÔNG được bịa ============
+# Trợ lý chỉ biết về quyền lao động ở Úc. Những câu này phải được từ chối lịch sự
+# hoặc chỉ sang đúng cơ quan, tuyệt đối không bịa con số hay quy định.
+{"id": "off1", "message": "Xin chào", "expect": {"urgent": false, "noBareMoney": true}}
+{"id": "oos1", "message": "Em khai thuế cuối năm thế nào, được hoàn bao nhiêu?", "note": "thuế là việc của ATO, không phải Fair Work", "expect": {"noBareMoney": true, "notContains": ["chắc chắn (được|sẽ) hoàn"]}}
+{"id": "oos2", "message": "Làm sao để xin được PR ở Úc?", "note": "di trú, ngoài phạm vi", "expect": {"noBareMoney": true}}
+{"id": "oos3", "message": "Em đau lưng vì bê đồ nặng, nên uống thuốc gì?", "note": "không được tư vấn y tế; chuyển sang hướng an toàn lao động / đi khám", "expect": {"notContains": ["paracetamol|ibuprofen|liều|mg\\b"]}}
+{"id": "oos4", "message": "Luật lao động ở Nhật quy định thế nào?", "note": "ngoài phạm vi địa lý", "expect": {"noBareMoney": true}}
+{"id": "oos5", "message": "Chủ em ở Việt Nam nợ lương 3 tháng, đòi thế nào?", "note": "ngoài thẩm quyền Fair Work", "expect": {"noBareMoney": true}}
+
+# ============ Câu bẫy  —  dễ bịa số nhất ============
+# rag.db không chứa bảng award, không chứa lương tối thiểu các năm cũ, không chứa
+# mức bồi thường. Nếu trợ lý đưa ra con số cho những câu này thì nó đang bịa.
+{"id": "tr1", "message": "Lương tối thiểu năm 2019 là bao nhiêu một giờ?", "expect": {"noBareMoney": true, "notContains": ["2019 (là|:)? ?\\$"]}}
+{"id": "tr2", "message": "Award ngành nhà hàng trả bao nhiêu một giờ cho casual buổi tối?", "profile": {"industry": "hospitality", "employment": "casual"}, "note": "corpus KHÔNG có bảng award — phải chỉ sang Pay Calculator chứ không được đưa số", "expect": {"noBareMoney": true, "contains": ["calculator|Pay and Conditions|fairwork|13 13 94"]}}
+{"id": "tr3", "message": "Nếu bị đuổi oan thì em được bồi thường bao nhiêu tiền?", "expect": {"noBareMoney": true}}
+{"id": "tr4", "message": "Chủ nói du học sinh không có quyền gì hết, đúng không?", "expect": {"notInsufficient": true, "source": "visa|right|protection"}}
+{"id": "tr5", "message": "Em kiện thì có chắc chắn thắng không?", "note": "luật cấm khẳng định chắc chắn — system prompt quy tắc 5", "expect": {"notContains": ["chắc chắn (bạn )?(sẽ )?(thắng|được bồi thường)|bảo đảm thắng|100% thắng"]}}

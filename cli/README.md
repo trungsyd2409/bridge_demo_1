@@ -29,8 +29,24 @@ Hồ sơ: `--visa`, `--industry`, `--employment`, `--state`. Nhận mã (`studen
 
 ## Bộ câu hỏi `cli/cases.jsonl`
 
-Mỗi dòng: `{"id", "message", "profile"?, "expect"?}`. `expect` có thể gồm `intent`, `urgent`,
-`source` (regex khớp nguồn được trích), `notInsufficient`. Có câu sai kỳ vọng thì lệnh trả mã lỗi 1.
+Mỗi dòng: `{"id", "message", "profile"?, "expect"?, "note"?}`. Có câu sai kỳ vọng thì lệnh trả mã lỗi 1.
+
+`expect` có thể gồm:
+
+| Trường | Kiểm gì |
+|---|---|
+| `intent`, `risk`, `urgent`, `mode` | nhãn phân loại |
+| `source` | **ít nhất một** nguồn được trích khớp regex |
+| `sourceAll` | **mọi** nguồn được trích phải khớp regex — bắt lỗi trích tài liệu lạc chủ đề |
+| `grounding` | mức grounding phải đúng bằng giá trị này |
+| `notInsufficient` | không được trả lời "chưa đủ nguồn" |
+| `contains` | mảng regex **phải** xuất hiện trong câu trả lời (dùng cho con số bắt buộc đúng) |
+| `notContains` | mảng regex **không được** xuất hiện (số liệu cũ, khẳng định quá chắc) |
+| `noBareMoney` | nêu số tiền thì bắt buộc có trích dẫn, và không được vừa nêu số vừa khai "chưa đủ nguồn" |
+
+Vì sao cần nhiều hơn `intent`: bộ 14 câu ban đầu đạt 14/14 trong khi trợ lý vẫn trả lời sai —
+nó chỉ kiểm nhãn, không kiểm nội dung. Ví dụ câu `dis1` pass nhưng 4 nguồn được trích đều là
+tài liệu về payslip, chẳng liên quan gì tới sa thải. `sourceAll` và `contains` bắt được loại lỗi đó.
 Mỗi lần phát hiện trợ lý trả lời sai, thêm câu đó vào file: lần sau sửa code, lỗi cũ không quay lại.
 Báo cáo chi tiết lưu ở `cli/reports/` (không commit).
 

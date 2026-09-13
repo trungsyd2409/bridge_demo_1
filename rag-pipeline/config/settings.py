@@ -55,7 +55,7 @@ CHUNK_MIN_TOKENS = 40  # section ngắn hơn mức này được gộp với chu
 EMBED_MODEL = "gemini-embedding-001"
 EMBED_DIM = 768  # PHẢI khớp với phía app khi embed câu hỏi
 # đổi thành model rẻ nhất trong AI_MODELS của app
-TAG_MODEL = "gemini-3.1-flash-lite"
+TAG_MODEL = "gemini-3.5-flash-lite"
 TAG_BATCH_SIZE = 8     # số chunk gửi trong một lần gọi tag
 EMBED_BATCH_SIZE = 16  # số chunk gửi trong một lần gọi embedding
 GEMINI_MAX_RETRIES = 4
@@ -67,5 +67,6 @@ FAKE_GEMINI_ENV = "RAG_FAKE_GEMINI"
 # ---- Bước 08-09 ----
 EVAL_TOP_K = 5
 NORM_TOLERANCE = 0.01
-APP_DB_PATH = ROOT.parent / "ban-dong-hanh" / \
-    "data" / "rag.db"  # đổi nếu app ở chỗ khác
+# ROOT = <repo>/rag-pipeline, nên ROOT.parent chính là thư mục app. Trước đây trỏ vào
+# "ban-dong-hanh" — tên cũ của app; bước 09_publish sẽ chép rag.db ra ngoài repo.
+APP_DB_PATH = ROOT.parent / "data" / "rag.db"
