@@ -160,6 +160,9 @@ interface Expect {
   notInsufficient?: boolean;
   /** Mức grounding chính xác phải bằng giá trị này. */
   grounding?: "grounded" | "partial" | "insufficient";
+  /** Grounding phải nằm trong danh sách này. Dùng cho câu ngoài phạm vi: được phép
+   *  "partial"/"insufficient" nhưng KHÔNG được tự nhận "grounded" — đó là nhận vơ có nguồn. */
+  groundingIn?: ("grounded" | "partial" | "insufficient")[];
   /** Mọi regex phải XUẤT HIỆN trong câu trả lời (dùng cho con số bắt buộc đúng). */
   contains?: string[];
   /** Mọi regex KHÔNG được xuất hiện (dùng cho số liệu cũ / khẳng định quá chắc). */
@@ -216,6 +219,7 @@ function checkExpect(e: Expect | undefined, r: AssistantResponse): string[] {
   }
 
   if (e.grounding && r.answer.grounding !== e.grounding) fails.push(`grounding là "${r.answer.grounding}", cần "${e.grounding}"`);
+  if (e.groundingIn && !e.groundingIn.includes(r.answer.grounding)) fails.push(`grounding là "${r.answer.grounding}", chỉ chấp nhận ${e.groundingIn.join(" / ")}`);
   if (e.notInsufficient && r.answer.grounding === "insufficient") fails.push("trả lời 'chưa đủ nguồn'");
 
   for (const pat of e.contains ?? []) {
@@ -239,23 +243,62 @@ function checkExpect(e: Expect | undefined, r: AssistantResponse): string[] {
   return fails;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Nghỉ giữa các câu. Chạy 51 câu liên tiếp = ~150 lần gọi Gemini trong vài phút;
+ * hạn mức theo phút (nhất là hạn mức TOKEN) bị cạn, và bước bị từ chối đầu tiên luôn là
+ * "Sinh câu trả lời" vì prompt của nó lớn nhất (4 đoạn bằng chứng × 1500 ký tự).
+ * Khi đó câu trả lời rơi xuống mẫu dự phòng và MỌI assertion về nội dung đều vô nghĩa.
+ * Đổi bằng: ASK_EVAL_DELAY_MS=2500 npm run ask:eval
+ */
+const CASE_DELAY_MS = Number(process.env.ASK_EVAL_DELAY_MS ?? 1500);
+/** Câu nào lỗi bước LLM thì nghỉ dài rồi chạy lại đúng một lần. 0 = tắt. */
+const RETRY_WAIT_MS = Number(process.env.ASK_EVAL_RETRY_MS ?? 20_000);
+
+/** Rút gọn detail của trace thành một dòng đọc được. */
+function briefDetail(detail: unknown): string {
+  if (detail == null) return "";
+  if (typeof detail === "string") return detail.replace(/\s+/g, " ").slice(0, 200);
+  const d = detail as Record<string, unknown>;
+  if (typeof d.error === "string") return d.error.replace(/\s+/g, " ").slice(0, 200);
+  return JSON.stringify(detail).slice(0, 200);
+}
+
 async function runFile(file: string, baseProfile: UserProfile) {
   const cases = readCases(file);
-  console.log(c.bold(`Chạy ${cases.length} câu từ ${file}\n`));
+  console.log(c.bold(`Chạy ${cases.length} câu từ ${file}`));
+  console.log(c.dim(`nghỉ ${CASE_DELAY_MS} ms giữa các câu · chạy lại 1 lần sau ${RETRY_WAIT_MS} ms nếu lỗi bước LLM\n`));
   const results = [];
   let failed = 0;
+  let retried = 0;
   for (const [i, tc] of cases.entries()) {
     const id = tc.id ?? `#${i + 1}`;
     const profile = { ...baseProfile, ...normalizeProfile(tc.profile ?? {}) };
+    if (i > 0 && CASE_DELAY_MS > 0) await sleep(CASE_DELAY_MS);
     try {
-      const { response: r, trace, ms } = await ask(tc.message, profile);
+      let { response: r, trace, ms } = await ask(tc.message, profile);
+      // Lỗi bước LLM gần như luôn là hạn mức theo phút, không phải lỗi logic.
+      // Nghỉ rồi chạy lại một lần: nếu lần hai chạy được thì kết quả cũ chỉ là nhiễu.
+      let stepErrs = trace.filter((t) => !t.ok);
+      if (stepErrs.length && RETRY_WAIT_MS > 0) {
+        console.log(c.yellow(`  ${id}: lỗi ${stepErrs.map((s) => s.step).join(", ")} — nghỉ ${RETRY_WAIT_MS / 1000}s rồi thử lại`));
+        console.log(c.dim(`      lý do: ${stepErrs.map((s) => briefDetail(s.detail)).join(" | ")}`));
+        await sleep(RETRY_WAIT_MS);
+        const again = await ask(tc.message, profile);
+        retried++;
+        ({ response: r, trace, ms } = again);
+        stepErrs = trace.filter((t) => !t.ok);
+      }
       const fails = checkExpect(tc.expect, r);
-      const stepErrors = trace.filter((t) => !t.ok).map((t) => t.step);
+      // GIỮ CẢ LÝ DO, không chỉ tên bước: báo cáo cũ chỉ ghi "Sinh câu trả lời"
+      // nên không thể biết là hết hạn mức, timeout hay model bị khoá.
+      const stepErrors = stepErrs.map((t) => ({ step: t.step, detail: briefDetail(t.detail) }));
       if (fails.length) failed++;
       const mark = !tc.expect ? c.dim("·") : fails.length ? c.red("✗") : c.green("✓");
-      console.log(`${mark} ${id.padEnd(5)} ${r.intent.padEnd(16)} ${r.risk.padEnd(6)} ${r.answer.grounding.padEnd(12)} ${String(ms).padStart(5)} ms  ${c.dim(tc.message.slice(0, 50))}`);
+      console.log(`${mark} ${id.padEnd(5)} ${r.intent.padEnd(16)} ${r.risk.padEnd(6)} ${r.answer.grounding.padEnd(12)} ${r.mode.padEnd(8)} ${String(ms).padStart(5)} ms  ${c.dim(tc.message.slice(0, 44))}`);
       for (const f of fails) console.log(c.red(`        → ${f}`));
-      if (stepErrors.length) console.log(c.yellow(`        ! bước lỗi: ${stepErrors.join(", ")}`));
+      for (const s of stepErrors) console.log(c.yellow(`        ! ${s.step}: ${s.detail}`));
       results.push({ id, message: tc.message, profile, ms, intent: r.intent, risk: r.risk, mode: r.mode,
         grounding: r.answer.grounding, urgent: r.urgent.show, fails, stepErrors, response: r });
     } catch (e) {
@@ -264,6 +307,16 @@ async function runFile(file: string, baseProfile: UserProfile) {
       results.push({ id, message: tc.message, error: (e as Error).message });
     }
   }
+  // Câu nào rơi xuống mẫu dự phòng thì assertion về nội dung/nguồn không có giá trị:
+  // nói rõ ra để không đọc nhầm nhiễu thành lỗi chất lượng.
+  const fellBack = results.filter((r) => "mode" in r && r.mode === "fallback");
+  const noisyFails = fellBack.filter((r) => "fails" in r && (r.fails as string[]).length).length;
+  if (fellBack.length) {
+    console.log(c.yellow(`\n⚠ ${fellBack.length}/${results.length} câu chạy bằng MẪU DỰ PHÒNG (LLM không trả lời được).`));
+    if (noisyFails) console.log(c.yellow(`  ${noisyFails} câu rớt nằm trong nhóm đó — đây là nhiễu hạ tầng, chưa phải lỗi chất lượng.`));
+    console.log(c.dim(`  Thử: ASK_EVAL_DELAY_MS=4000 npm run ask:eval`));
+  }
+  if (retried) console.log(c.dim(`\nĐã chạy lại ${retried} câu sau khi gặp lỗi bước LLM.`));
   const withExpect = cases.filter((tc) => tc.expect).length;
   const avg = Math.round(results.reduce((s, r) => s + ("ms" in r ? (r.ms as number) : 0), 0) / Math.max(results.length, 1));
   console.log(c.bold(`\nKết quả: ${withExpect - failed}/${withExpect} câu đạt kỳ vọng · thời gian trung bình ${avg} ms`));

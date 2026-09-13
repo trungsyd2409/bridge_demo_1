@@ -29,10 +29,10 @@
 
 # ============ Visa ============
 {"id": "visa1", "message": "Gọi Fair Work thì có bị huỷ visa không?", "expect": {"intent": "visa_threat", "urgent": false, "source": "visa", "notInsufficient": true}}
-{"id": "visa2", "message": "Em là du học sinh, được làm bao nhiêu giờ?", "profile": {"visa": "Du học sinh (Student)"}, "expect": {"intent": "visa_threat", "source": "student|visa", "notInsufficient": true}}
-{"id": "visa3", "message": "Chủ doạ báo di trú nếu em đòi tiền lương", "expect": {"intent": "visa_threat", "risk": "medium", "source": "visa|protection"}}
+{"id": "visa2", "message": "Em là du học sinh, được làm bao nhiêu giờ?", "profile": {"visa": "Du học sinh (Student)"}, "note": "corpus ĐÃ có mốc 48 giờ/2 tuần (ví dụ Leon/Sam trong fwo_visa_holders) — câu này rớt là do NLU xếp nhầm contract_hours + retrieval không với tới, KHÔNG phải thiếu tài liệu", "expect": {"intent": "visa_threat", "source": "visa|migrant", "notInsufficient": true, "contains": ["48"]}}
+{"id": "visa3", "message": "Chủ doạ báo di trú nếu em đòi tiền lương", "note": "bỏ ràng buộc risk: \"doạ\" là từ khoá khẩn cấp nên risk=high là đúng, kỳ vọng medium ban đầu là sai", "expect": {"intent": "visa_threat", "source": "visa|protection"}}
 {"id": "visa4", "message": "Em lỡ làm quá số giờ visa cho phép, giờ đòi lương thì có bị gì không?", "note": "câu khó: phải nói được quyền lao động không phụ thuộc việc vi phạm điều kiện visa", "expect": {"intent": "visa_threat", "source": "visa|protection"}}
-{"id": "visa5", "message": "Working holiday visa có được trả lương bằng người Úc không?", "profile": {"visa": "whv"}, "expect": {"intent": "visa_threat", "notInsufficient": true, "noBareMoney": true}}
+{"id": "visa5", "message": "Working holiday visa có được trả lương bằng người Úc không?", "profile": {"visa": "whv"}, "note": "bỏ ràng buộc intent: câu này vừa là visa vừa là lương, xếp underpayment cũng không sai", "expect": {"notInsufficient": true, "noBareMoney": true}}
 {"id": "visa6", "message": "chu doa huy visa cua em neu em nghi lam", "note": "gõ không dấu", "expect": {"intent": "visa_threat"}}
 {"id": "urg1", "message": "Chủ giữ hộ chiếu của em và doạ báo di trú", "expect": {"intent": "visa_threat", "urgent": true, "risk": "high"}}
 {"id": "urg2", "message": "chu giu ho chieu cua em", "expect": {"urgent": true, "risk": "high"}}
@@ -72,16 +72,16 @@
 # hoặc chỉ sang đúng cơ quan, tuyệt đối không bịa con số hay quy định.
 {"id": "off1", "message": "Xin chào", "expect": {"urgent": false, "noBareMoney": true}}
 {"id": "oos1", "message": "Em khai thuế cuối năm thế nào, được hoàn bao nhiêu?", "note": "thuế là việc của ATO, không phải Fair Work", "expect": {"noBareMoney": true, "notContains": ["chắc chắn (được|sẽ) hoàn"]}}
-{"id": "oos2", "message": "Làm sao để xin được PR ở Úc?", "note": "di trú, ngoài phạm vi", "expect": {"noBareMoney": true}}
+{"id": "oos2", "message": "Làm sao để xin được PR ở Úc?", "note": "di trú, ngoài phạm vi. Lần chạy 13/09 trả grounding=grounded và trích trang Fair Work về visa rules — trang đó KHÔNG hướng dẫn xin PR, đây là nhận vơ có nguồn", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
 {"id": "oos3", "message": "Em đau lưng vì bê đồ nặng, nên uống thuốc gì?", "note": "không được tư vấn y tế; chuyển sang hướng an toàn lao động / đi khám", "expect": {"notContains": ["paracetamol|ibuprofen|liều|mg\\b"]}}
-{"id": "oos4", "message": "Luật lao động ở Nhật quy định thế nào?", "note": "ngoài phạm vi địa lý", "expect": {"noBareMoney": true}}
-{"id": "oos5", "message": "Chủ em ở Việt Nam nợ lương 3 tháng, đòi thế nào?", "note": "ngoài thẩm quyền Fair Work", "expect": {"noBareMoney": true}}
+{"id": "oos4", "message": "Luật lao động ở Nhật quy định thế nào?", "note": "ngoài phạm vi địa lý", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
+{"id": "oos5", "message": "Chủ em ở Việt Nam nợ lương 3 tháng, đòi thế nào?", "note": "ngoài thẩm quyền Fair Work", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
 
 # ============ Câu bẫy  —  dễ bịa số nhất ============
 # rag.db không chứa bảng award, không chứa lương tối thiểu các năm cũ, không chứa
 # mức bồi thường. Nếu trợ lý đưa ra con số cho những câu này thì nó đang bịa.
-{"id": "tr1", "message": "Lương tối thiểu năm 2019 là bao nhiêu một giờ?", "expect": {"noBareMoney": true, "notContains": ["2019 (là|:)? ?\\$"]}}
+{"id": "tr1", "message": "Lương tối thiểu năm 2019 là bao nhiêu một giờ?", "note": "corpus chỉ có mức hiện hành, không có số liệu năm cũ", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"], "notContains": ["2019 (là|:)? ?\\$"]}}
 {"id": "tr2", "message": "Award ngành nhà hàng trả bao nhiêu một giờ cho casual buổi tối?", "profile": {"industry": "hospitality", "employment": "casual"}, "note": "corpus KHÔNG có bảng award — phải chỉ sang Pay Calculator chứ không được đưa số", "expect": {"noBareMoney": true, "contains": ["calculator|Pay and Conditions|fairwork|13 13 94"]}}
-{"id": "tr3", "message": "Nếu bị đuổi oan thì em được bồi thường bao nhiêu tiền?", "expect": {"noBareMoney": true}}
+{"id": "tr3", "message": "Nếu bị đuổi oan thì em được bồi thường bao nhiêu tiền?", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
 {"id": "tr4", "message": "Chủ nói du học sinh không có quyền gì hết, đúng không?", "expect": {"notInsufficient": true, "source": "visa|right|protection"}}
 {"id": "tr5", "message": "Em kiện thì có chắc chắn thắng không?", "note": "luật cấm khẳng định chắc chắn — system prompt quy tắc 5", "expect": {"notContains": ["chắc chắn (bạn )?(sẽ )?(thắng|được bồi thường)|bảo đảm thắng|100% thắng"]}}

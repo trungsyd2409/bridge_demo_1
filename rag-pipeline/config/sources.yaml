@@ -124,30 +124,43 @@
   employment: [all]
   priority: 2
 
-- id: homeaffairs_vevo_check_conditions
-  url: https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/check-conditions-online
-  source: Department of Home Affairs
-  type: html
-  language: en
-  topic: visa_threat
-  industry: [all]
-  visa: [all]
-  employment: [all]
-  priority: 2
+# ---- Nguồn immi.homeaffairs.gov.au: đã bỏ / tắt (kiểm chứng 13/09/2026) ----
+# Lý do 1 — nội dung lỗi thời: trang .../temporary-relaxation-of-working-hours-for-student-visa-holders
+#   là trang thời COVID, ghi "more than 40 hours a fortnight". Mức hiện hành là 48 giờ/2 tuần.
+#   Nạp vào rag.db là tự bơm số liệu sai vào đúng chỗ cần chính xác nhất.
+# Lý do 2 — trang dựng bằng JavaScript: bước 01_fetch chỉ lấy được khung nav/footer.
+#   Bằng chứng: rag.db hiện tại có đúng 4 chunk từ Home Affairs, nội dung là "Cost concession",
+#   "Processing times" (2 chunk) và câu giới thiệu visa. Không chunk nào nói về điều kiện làm việc.
+# Cách bật lại: mở trang bằng trình duyệt, lưu PDF vào rag-pipeline/data/manual/<id>.pdf,
+#   bỏ dấu # ở khối tương ứng và để type: pdf — 01_fetch tự dùng file đó khi tải không được.
+# Ghi chú: mốc 48 giờ/2 tuần ĐÃ có sẵn trong corpus, trong ví dụ Leon/Sam ở trang
+#   fairwork.gov.au/find-help-for/visa-holders-migrants (nguồn fwo_visa_holders, có từ trước).
 
+# - id: homeaffairs_vevo_check_conditions
+#   url: https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/check-conditions-online
+#   source: Department of Home Affairs
+#   type: pdf
+#   language: en
+#   topic: visa_threat
+#   industry: [all]
+#   visa: [all]
+#   employment: [all]
+#   priority: 2
+#
+#
+# # SỬA: url cũ dính tham số theo dõi ?fbclid=... (link copy từ Facebook) và khai type: pdf
+# # trong khi đây là trang html. Fetch bằng link đó dễ ra nội dung khác hoặc lỗi.
 
-# SỬA: url cũ dính tham số theo dõi ?fbclid=... (link copy từ Facebook) và khai type: pdf
-# trong khi đây là trang html. Fetch bằng link đó dễ ra nội dung khác hoặc lỗi.
-- id: student_visa_500
-  url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500
-  source: Department of Home Affairs
-  type: html
-  language: en
-  topic: visa_threat
-  industry: [all]
-  visa: [student]
-  employment: [all]
-  priority: 2
+# - id: student_visa_500
+#   url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500
+#   source: Department of Home Affairs
+#   type: pdf
+#   language: en
+#   topic: visa_threat
+#   industry: [all]
+#   visa: [student]
+#   employment: [all]
+#   priority: 2
 
 # ===================== Ưu tiên 3 — đã có link (kiểm tra 12/09/2026) =====================
 # Bổ sung sau khi truy vấn rag.db và phát hiện: 106 chunk nhưng topic unfair_dismissal
@@ -315,29 +328,6 @@
   priority: 2
 
 # ---- Visa: điều kiện làm việc của du học sinh ----
-- id: immi_student_work_restrictions
-  url: https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500/temporary-relaxation-of-working-hours-for-student-visa-holders
-  source: Department of Home Affairs
-  type: pdf
-  language: en
-  topic: visa_threat
-  industry: [all]
-  visa: [student]
-  employment: [all]
-  priority: 1
-
-- id: immi_visa_conditions_list
-  url: https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/conditions-list
-  source: Department of Home Affairs
-  type: html
-  language: en
-  topic: visa_threat
-  industry: [all]
-  visa: [all]
-  employment: [all]
-  priority: 2
-
-# ---- Tổng quan (dùng cho câu hỏi chung) ----
 - id: fwo_information_statement
   url: https://www.fairwork.gov.au/sites/default/files/migration/724/Fair-Work-Information-Statement.pdf
   source: Fair Work Ombudsman

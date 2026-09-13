@@ -70,7 +70,7 @@ const INTENT_QUERY: Record<Intent, string> = {
   underpayment: "underpayment minimum wage award pay rates",
   no_payslip: "pay slips record keeping employer must provide",
   unsafe: "work health and safety rights protective equipment injury",
-  visa_threat: "visa holders workplace rights visa protection",
+  visa_threat: "visa holders workplace rights visa protection student visa work hours fortnight",
   harassment: "sexual harassment discrimination at work complaint",
   unfair_dismissal: "unfair dismissal notice time limit",
   contract_hours: "employment contract hours sham contracting ABN",
@@ -106,7 +106,7 @@ const GLOSSARY: [string, string][] = [
   ["chu nhat", "Sunday penalty rates"], ["ngay le", "public holiday penalty rates"], ["tang ca", "overtime"],
   ["casual", "casual loading"], ["abn", "ABN sham contracting contractor"],
   ["ho chieu", "passport held"], ["huy visa", "visa cancelled"], ["sinh vien", "student visa work hours"],
-  ["du hoc", "student visa"], ["duoi viec", "dismissal"], ["sa thai", "unfair dismissal"],
+  ["du hoc", "student visa work hours fortnight"], ["bao nhieu gio", "visa work hours limit fortnight"], ["duoi viec", "dismissal"], ["sa thai", "unfair dismissal"],
   ["bi thuong", "injured at work workers compensation"], ["do bao ho", "protective equipment"],
   ["gang tay", "gloves protective equipment"], ["hoa chat", "chemicals"],
   ["quay roi", "sexual harassment"], ["tuc tiu", "sexual comments harassment"], ["phan biet", "discrimination"],
@@ -148,6 +148,12 @@ intent (choose one):
 - contract_hours: contract, ABN/sham contracting, rosters, hours, leave
 - general: anything else
 
+Disambiguation — "hours" appears in two intents, choose by WHO sets the limit:
+- A limit set by the VISA ("how many hours can I work as a student?", "am I over my visa hours?")
+  is visa_threat, never contract_hours.
+- A limit set by the EMPLOYER (roster changes, shifts cut, hours in the contract, leave)
+  is contract_hours.
+
 risk:
 - high: passport held, threats, violence, injury, forced work, sexual assault, self-harm, cannot leave
 - medium: clear underpayment, visa pressure, harassment without violence, dismissal
@@ -155,7 +161,9 @@ risk:
 
 needsReferral: true when the worker should contact an official body or support service now.
 englishQuery: rewrite the question as a short English search query using Australian workplace law terms
-(award, casual loading, pay slip, penalty rates, unpaid trial, visa conditions, sham contracting...).
+(award, casual loading, pay slip, penalty rates, unpaid trial, visa conditions, sham contracting,
+unfair dismissal, adverse action, workplace right...). For student visa work limits use the words
+"student visa work hours fortnight" — the documents phrase it that way.
 entities: only values explicitly stated. amount/hourlyRate in AUD numbers. abn = 11 digits if given.`;
 
 const SCHEMA = {
