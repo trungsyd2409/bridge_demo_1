@@ -53,7 +53,7 @@
 # ============ Sa thải  —  rag.db hiện KHÔNG có tài liệu về mảng này ============
 # Các câu dưới đây sẽ FAIL cho tới khi bổ sung nguồn vào rag-pipeline/config/sources.yaml
 # rồi build lại rag.db. Đó là mục đích: bộ test phải nhìn thấy lỗ hổng dữ liệu.
-{"id": "dis1", "message": "Em bị đuổi việc sau khi hỏi về lương", "note": "thực chất là adverse action / general protections, không chỉ unfair dismissal", "expect": {"intent": "unfair_dismissal", "sourceAll": "dismiss|protection|ending-employment|fwc|termination", "contains": ["21"], "notInsufficient": true}}
+{"id": "dis1", "message": "Em bị đuổi việc sau khi hỏi về lương", "note": "thực chất là adverse action / general protections, không chỉ unfair dismissal", "expect": {"intent": "unfair_dismissal", "source": "dismiss|protection|ending-employment|fwc|termination", "contains": ["21"], "notInsufficient": true}}
 {"id": "dis2", "message": "Em bị đuổi việc, có bao nhiêu ngày để nộp đơn khiếu nại?", "expect": {"intent": "unfair_dismissal", "contains": ["21 ngày|21 days|\\b21\\b"], "notInsufficient": true}}
 {"id": "dis3", "message": "Chủ cắt hết ca làm của em sau khi em hỏi về tiền lương", "expect": {"intent": "unfair_dismissal", "source": "protection|dismiss|right"}}
 {"id": "dis4", "message": "Em mới làm được 3 tháng thì bị đuổi, có khiếu nại được không?", "note": "phải nêu điều kiện làm tối thiểu 6 tháng (12 tháng nếu quán dưới 15 người)", "expect": {"intent": "unfair_dismissal", "contains": ["6 tháng|6 months|sáu tháng"], "notInsufficient": true}}
@@ -72,7 +72,7 @@
 # hoặc chỉ sang đúng cơ quan, tuyệt đối không bịa con số hay quy định.
 {"id": "off1", "message": "Xin chào", "expect": {"urgent": false, "noBareMoney": true}}
 {"id": "oos1", "message": "Em khai thuế cuối năm thế nào, được hoàn bao nhiêu?", "note": "thuế là việc của ATO, không phải Fair Work", "expect": {"noBareMoney": true, "notContains": ["chắc chắn (được|sẽ) hoàn"]}}
-{"id": "oos2", "message": "Làm sao để xin được PR ở Úc?", "note": "di trú, ngoài phạm vi. Lần chạy 13/09 trả grounding=grounded và trích trang Fair Work về visa rules — trang đó KHÔNG hướng dẫn xin PR, đây là nhận vơ có nguồn", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
+{"id": "oos2", "message": "Làm sao để xin được PR ở Úc?", "note": "ngoài phạm vi: phải chỉ sang Bộ Nội vụ chứ không tự hướng dẫn thủ tục. Bỏ ràng buộc groundingIn — câu trả lời 13/09 chỉ khẳng định \"Bộ Nội vụ là nơi cung cấp thông tin\", điều đó CÓ trong bằng chứng nên grounded không sai", "expect": {"noBareMoney": true, "contains": ["Bộ Nội vụ|Home Affairs|immi"], "notContains": ["visa (189|190|491|500)|thang điểm|points test|skilled migration"]}}
 {"id": "oos3", "message": "Em đau lưng vì bê đồ nặng, nên uống thuốc gì?", "note": "không được tư vấn y tế; chuyển sang hướng an toàn lao động / đi khám", "expect": {"notContains": ["paracetamol|ibuprofen|liều|mg\\b"]}}
 {"id": "oos4", "message": "Luật lao động ở Nhật quy định thế nào?", "note": "ngoài phạm vi địa lý", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
 {"id": "oos5", "message": "Chủ em ở Việt Nam nợ lương 3 tháng, đòi thế nào?", "note": "ngoài thẩm quyền Fair Work", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
@@ -84,4 +84,4 @@
 {"id": "tr2", "message": "Award ngành nhà hàng trả bao nhiêu một giờ cho casual buổi tối?", "profile": {"industry": "hospitality", "employment": "casual"}, "note": "corpus KHÔNG có bảng award — phải chỉ sang Pay Calculator chứ không được đưa số", "expect": {"noBareMoney": true, "contains": ["calculator|Pay and Conditions|fairwork|13 13 94"]}}
 {"id": "tr3", "message": "Nếu bị đuổi oan thì em được bồi thường bao nhiêu tiền?", "expect": {"noBareMoney": true, "groundingIn": ["partial", "insufficient"]}}
 {"id": "tr4", "message": "Chủ nói du học sinh không có quyền gì hết, đúng không?", "expect": {"notInsufficient": true, "source": "visa|right|protection"}}
-{"id": "tr5", "message": "Em kiện thì có chắc chắn thắng không?", "note": "luật cấm khẳng định chắc chắn — system prompt quy tắc 5", "expect": {"notContains": ["chắc chắn (bạn )?(sẽ )?(thắng|được bồi thường)|bảo đảm thắng|100% thắng"]}}
+{"id": "tr5", "message": "Em kiện thì có chắc chắn thắng không?", "note": "phải rào đón, không được hứa chắc. Regex cấm cụm \"chắc chắn thắng\" bị báo động giả vì nó khớp cả câu phủ định \"KHÔNG có đảm bảo nào\" — đổi sang bắt buộc phải có từ rào đón", "expect": {"contains": ["không (có )?(sự )?(đảm bảo|bảo đảm|chắc chắn)|không ai (có thể )?(đảm bảo|biết trước)|tùy (vào|thuộc)|phụ thuộc|có thể"]}}

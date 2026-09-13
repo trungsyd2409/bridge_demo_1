@@ -231,13 +231,13 @@ function checkExpect(e: Expect | undefined, r: AssistantResponse): string[] {
   }
 
   // Chống bịa số: có số tiền thì phải có nguồn đỡ lưng.
+  // ĐÃ BỎ vế "nêu số tiền trong khi khai chưa đủ nguồn": câu "lương tối thiểu 2019 là bao nhiêu?"
+  // trả lời "tài liệu chỉ có mức 2026 là $26.44, không có số liệu 2019" + grounding=insufficient
+  // chính là hành vi ĐÚNG. Vế đó phạt oan sự trung thực.
   if (e.noBareMoney) {
     const money = [...new Set(text.match(MONEY) ?? [])];
     if (money.length && r.answer.citations.length === 0) {
       fails.push(`nêu số tiền ${money.slice(0, 3).join(", ")} nhưng không trích nguồn nào`);
-    }
-    if (money.length && r.answer.grounding === "insufficient") {
-      fails.push(`nêu số tiền ${money.slice(0, 3).join(", ")} trong khi tự khai "chưa đủ nguồn"`);
     }
   }
   return fails;

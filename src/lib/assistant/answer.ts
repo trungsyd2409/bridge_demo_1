@@ -64,17 +64,66 @@ const str = (v: unknown, max = 1200) => (typeof v === "string" && v.trim() ? v.t
 const strList = (v: unknown) =>
   Array.isArray(v) ? v.map((x) => str(x, 400)).filter((x): x is string => !!x).slice(0, 6) : [];
 
-export function validateAnswer(raw: unknown, evidenceCount: number): AnswerParts | null {
+/** "$26.44", "$1,234", "26,44 đô" — mọi cách viết số tiền có thể xuất hiện trong câu trả lời. */
+const MONEY = /\$\s?\d[\d.,]*|\b\d+[.,]\d{2}\s*(?:đô|AUD)/gi;
+
+/** "$26.44" và "26,44 đô" đều thành "26.44" để so với nội dung bằng chứng. */
+function normalizeMoney(token: string): string {
+  return token.replace(/[^\d.,]/g, "").replace(/,/g, ".").replace(/\.$/, "");
+}
+
+/**
+ * Mọi con số tiền trong câu trả lời phải truy được về BẰNG CHỨNG hoặc về chính CÂU HỎI
+ * của người dùng (họ tự nói "chủ trả em 18 đô"). Số không truy được là số model tự nhớ —
+ * với app tư vấn quyền lao động thì đó là loại sai nguy hiểm nhất.
+ *
+ * Trả về: null = câu trả lời không dùng được; hoặc danh sách trích dẫn đã bổ sung.
+ *
+ * Bắt được trong lần đo 13/09: câu "Lương tối thiểu năm 2019 là bao nhiêu?" trả về
+ * "$26.44 (hoặc $33.05 cho casual)" với citations rỗng — số thì đúng nhưng không trích nguồn,
+ * người dùng không có cách nào kiểm lại.
+ */
+function checkMoney(
+  text: string, message: string, evidence: Evidence[], citations: number[],
+): number[] | null {
+  const money = [...new Set(text.match(MONEY) ?? [])].map(normalizeMoney).filter(Boolean);
+  if (money.length === 0) return citations;
+
+  const asked = message.replace(/,/g, ".");
+  const fromEvidence = new Set<number>();
+  for (const value of money) {
+    let found = false;
+    evidence.forEach((e, i) => {
+      if (e.content.replace(/,/g, ".").includes(value)) {
+        fromEvidence.add(i + 1);
+        found = true;
+      }
+    });
+    // Số người dùng tự nêu trong câu hỏi thì được phép nhắc lại mà không cần trích nguồn.
+    if (!found && !asked.includes(value)) return null; // số không truy được -> bỏ câu trả lời
+  }
+  if (fromEvidence.size === 0) return citations; // mọi số đều đến từ câu hỏi
+  // Có số lấy từ bằng chứng: bắt buộc phải trích. Model quên thì gắn hộ đúng bằng chứng chứa số đó.
+  return citations.length ? citations : [...fromEvidence].sort((a, b) => a - b);
+}
+
+export function validateAnswer(raw: unknown, evidence: Evidence[], message: string): AnswerParts | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
+  const evidenceCount = evidence.length;
   const whatIsHappening = str(r.whatIsHappening);
   const whyItMatters = str(r.whyItMatters);
   const whatToDo = strList(r.whatToDo);
   if (!whatIsHappening || !whyItMatters || whatToDo.length === 0) return null;
 
-  const citations = Array.isArray(r.citations)
+  let citations = Array.isArray(r.citations)
     ? [...new Set(r.citations.filter((n): n is number => Number.isInteger(n) && n >= 1 && n <= evidenceCount))]
     : [];
+
+  const checked = checkMoney([whatIsHappening, whyItMatters, ...whatToDo].join(" "), message, evidence, citations);
+  if (checked === null) return null; // có số tiền không truy được nguồn -> dùng mẫu dự phòng
+  citations = checked;
+
   let grounding = ["grounded", "partial", "insufficient"].includes(r.grounding as string)
     ? (r.grounding as AnswerParts["grounding"])
     : "partial";
@@ -183,7 +232,7 @@ export async function generateAnswer(
       // 0 = ep model bam sat EVIDENCE. 0.2 cho phep no "tu do dien dat" — voi so lieu luat thi do la bia.
       temperature: 0,
     });
-    const answer = validateAnswer(data, evidence.length);
+    const answer = validateAnswer(data, evidence, message);
     if (answer) return { answer, mode: "llm", model };
     return { answer: fallbackAnswer(nlu, profile, evidence, contacts), mode: "fallback", error: "JSON câu trả lời không hợp lệ" };
   } catch (e) {

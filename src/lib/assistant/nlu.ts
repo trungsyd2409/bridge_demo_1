@@ -38,6 +38,11 @@ const EMERGENCY_KEYWORDS = [
   "de doa", "doa giet", "doa bao", // đe doạ
   "bi danh", "danh em", "danh toi", "danh minh", "hanh hung", // bạo lực
   "bi thuong", "chay mau", "tai nan", "gay tay", "gay chan", // chấn thương
+  // Bổ sung 13/09: câu "Em bị bỏng dầu ở bếp, chủ nói tự đi khám" không khớp từ khoá nào,
+  // Gemini chấm risk=medium, nên khối khẩn cấp không hiện. Bỏng và điện giật ở bếp/xưởng
+  // là tai nạn lao động phổ biến nhất với nhóm người dùng này.
+  // Lưu ý: "bi bong" cũng khớp "bị bong gân" — chấp nhận báo thừa, vì báo thiếu nguy hiểm hơn.
+  "bi bong", "bong dau", "bong nuoc", "dien giat", "dut tay", "ngat xiu", // bỏng, điện giật
   "bi ep", "ep lam", "khong cho ve", "nhot", "khong tra giay to", // cưỡng ép
   "sam so", "hiep dam", "cuong hiep", "so mo nguoi", // tấn công tình dục
   "tu tu", "muon chet", "tu sat", // nguy cơ tự hại
